@@ -5,9 +5,10 @@ namespace backend\controllers;
 use Yii;
 use app\models\Book;
 use app\models\BookSearch;
+use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
  * BookController implements the CRUD actions for Book model.
@@ -20,6 +21,15 @@ class BookController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => AccessControl::className(),
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
@@ -61,13 +71,18 @@ class BookController extends Controller
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
-    public function actionCreate()
+    public function actionCreate($id = null)
     {
         $model = new Book();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         } else {
+            $originalModel = Book::findOne($id);
+            if ($originalModel) {
+                $model->setAttributes($originalModel->attributes);
+            }
+
             return $this->render('create', [
                 'model' => $model,
             ]);
